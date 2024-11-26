@@ -42,7 +42,8 @@ typedef struct {
 
 uart_t uart_handle[NB_UART];
 
-void USART_USART1_Init(void);
+void USART_DEBUG_Init(void);
+void USART_BLUETOOTH_Init(void);
 bool USART_tx_write(uart_e uart);
 
 void USART_Init(void) {
@@ -54,11 +55,11 @@ void USART_Init(void) {
         uart_handle[i].RxDataReceivedCallback = NULL;
     }
 
-    USART_USART1_Init();
+    USART_DEBUG_Init();
+    USART_BLUETOOTH_Init();
 }
 
-/* USART1 init function */
-void USART_USART1_Init(void) {
+void USART_DEBUG_Init(void) {
     uart_handle[UART_DEBUG].huart.Instance = USART1;
     uart_handle[UART_DEBUG].huart.Init.BaudRate = 115200;
     uart_handle[UART_DEBUG].huart.Init.WordLength = UART_WORDLENGTH_8B;
@@ -80,12 +81,35 @@ void USART_USART1_Init(void) {
     __HAL_DMA_DISABLE_IT(&uart_handle[UART_DEBUG].RxDmaHandle, DMA_IT_HT);
 }
 
+void USART_BLUETOOTH_Init(void) {
+    uart_handle[UART_BLUETOOTH].huart.Instance = USART2;
+    uart_handle[UART_BLUETOOTH].huart.Init.BaudRate = 38400;
+    uart_handle[UART_BLUETOOTH].huart.Init.WordLength = UART_WORDLENGTH_8B;
+    uart_handle[UART_BLUETOOTH].huart.Init.StopBits = UART_STOPBITS_1;
+    uart_handle[UART_BLUETOOTH].huart.Init.Parity = UART_PARITY_NONE;
+    uart_handle[UART_BLUETOOTH].huart.Init.Mode = UART_MODE_TX_RX;
+    uart_handle[UART_BLUETOOTH].huart.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+    uart_handle[UART_BLUETOOTH].huart.Init.OverSampling = UART_OVERSAMPLING_16;
+    if (HAL_UART_Init(&uart_handle[UART_BLUETOOTH].huart) != HAL_OK) {
+        Error_Handler();
+    }
+
+    if (HAL_UARTEx_ReceiveToIdle_DMA(&uart_handle[UART_BLUETOOTH].huart, uart_handle[UART_BLUETOOTH].RxRingbuffer, USART_RX_READ_BUFFER_SIZE)
+        != HAL_OK) {
+        LOG_ERROR("HAL_UARTEx_ReceiveToIdle_DMA");
+    }
+
+    // Disable interruption half transfer and tranfer complete which call HAL_UARTEx_RxEventCallback and cut the frame
+    __HAL_DMA_DISABLE_IT(&uart_handle[UART_BLUETOOTH].RxDmaHandle, DMA_IT_TC);
+    __HAL_DMA_DISABLE_IT(&uart_handle[UART_BLUETOOTH].RxDmaHandle, DMA_IT_HT);
+}
+
 void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle) {
 
     GPIO_InitTypeDef GPIO_InitStruct = {0};
 
     if (uartHandle->Instance == USART1) {
-        LOG_INFO("HAL_UART_MspDeInit");
+        LOG_INFO("HAL_UART_MspDeInit DEBUG");
 
         /* USART1 clock enable */
         __HAL_RCC_USART1_CLK_ENABLE();
@@ -147,6 +171,70 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle) {
         uart_handle[UART_DEBUG].rxDmaInterrupt = DMA1_Channel4_IRQn;
         HAL_NVIC_SetPriority(uart_handle[UART_DEBUG].rxDmaInterrupt, 0, 0);
         HAL_NVIC_EnableIRQ(uart_handle[UART_DEBUG].rxDmaInterrupt);
+
+    } else if (uartHandle->Instance == USART2) {
+        LOG_INFO("HAL_UART_MspDeInit BLUETOOTH");
+
+        /* USART1 clock enable */
+        __HAL_RCC_USART2_CLK_ENABLE();
+        __HAL_RCC_DMA1_CLK_ENABLE();
+        __HAL_RCC_GPIOA_CLK_ENABLE();
+
+        GPIO_InitStruct.Pin = UC_UART_BLUETOOTH_TX_Pin;
+        GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+        GPIO_InitStruct.Pull = GPIO_NOPULL;
+        GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+        HAL_GPIO_Init(UC_UART_BLUETOOTH_GPIO_Port, &GPIO_InitStruct);
+
+        GPIO_InitStruct.Pin = UC_UART_BLUETOOTH_TX_Pin;
+        GPIO_InitStruct.Mode = GPIO_MODE_AF_INPUT;
+        GPIO_InitStruct.Pull = GPIO_NOPULL;
+        HAL_GPIO_Init(UC_UART_BLUETOOTH_GPIO_Port, &GPIO_InitStruct);
+
+        /* USART DMA TX Init */
+        uart_handle[UART_BLUETOOTH].TxDmaHandle.Instance = DMA1_Channel7;
+        uart_handle[UART_BLUETOOTH].TxDmaHandle.Init.Direction = DMA_MEMORY_TO_PERIPH;
+        uart_handle[UART_BLUETOOTH].TxDmaHandle.Init.PeriphInc = DMA_PINC_DISABLE;
+        uart_handle[UART_BLUETOOTH].TxDmaHandle.Init.MemInc = DMA_MINC_ENABLE;
+        uart_handle[UART_BLUETOOTH].TxDmaHandle.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+        uart_handle[UART_BLUETOOTH].TxDmaHandle.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+        uart_handle[UART_BLUETOOTH].TxDmaHandle.Init.Priority = DMA_PRIORITY_HIGH;
+        uart_handle[UART_BLUETOOTH].TxDmaHandle.Init.Mode = DMA_NORMAL;
+        if (HAL_DMA_Init(&uart_handle[UART_BLUETOOTH].TxDmaHandle) != HAL_OK) {
+            Error_Handler();
+        }
+
+        __HAL_LINKDMA(uartHandle, hdmatx, uart_handle[UART_BLUETOOTH].TxDmaHandle);
+
+        /* USART DMA RX Init */
+        uart_handle[UART_BLUETOOTH].RxDmaHandle.Instance = DMA1_Channel6;
+        uart_handle[UART_BLUETOOTH].RxDmaHandle.Init.Direction = DMA_PERIPH_TO_MEMORY;
+        uart_handle[UART_BLUETOOTH].RxDmaHandle.Init.PeriphInc = DMA_PINC_DISABLE;
+        uart_handle[UART_BLUETOOTH].RxDmaHandle.Init.MemInc = DMA_MINC_ENABLE;
+        uart_handle[UART_BLUETOOTH].RxDmaHandle.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+        uart_handle[UART_BLUETOOTH].RxDmaHandle.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+        uart_handle[UART_BLUETOOTH].RxDmaHandle.Init.Priority = DMA_PRIORITY_HIGH;
+        uart_handle[UART_BLUETOOTH].RxDmaHandle.Init.Mode = DMA_CIRCULAR;
+        if (HAL_DMA_Init(&uart_handle[UART_BLUETOOTH].RxDmaHandle) != HAL_OK) {
+            Error_Handler();
+        }
+
+        __HAL_LINKDMA(uartHandle, hdmarx, uart_handle[UART_BLUETOOTH].RxDmaHandle);
+
+        /* USART interrupt Init */
+        uart_handle[UART_BLUETOOTH].uartInterrupt = USART2_IRQn;
+        HAL_NVIC_SetPriority(uart_handle[UART_BLUETOOTH].uartInterrupt, 0, 0);
+        HAL_NVIC_EnableIRQ(uart_handle[UART_BLUETOOTH].uartInterrupt);
+
+        /* DMA TX interrupt Init */
+        uart_handle[UART_BLUETOOTH].txDmaInterrupt = DMA1_Channel7_IRQn;
+        HAL_NVIC_SetPriority(uart_handle[UART_BLUETOOTH].txDmaInterrupt, 0, 0);
+        HAL_NVIC_EnableIRQ(uart_handle[UART_BLUETOOTH].txDmaInterrupt);
+
+        /* DMA RX interrupt Init */
+        uart_handle[UART_BLUETOOTH].rxDmaInterrupt = DMA1_Channel6_IRQn;
+        HAL_NVIC_SetPriority(uart_handle[UART_BLUETOOTH].rxDmaInterrupt, 0, 0);
+        HAL_NVIC_EnableIRQ(uart_handle[UART_BLUETOOTH].rxDmaInterrupt);
     }
 }
 
@@ -161,6 +249,14 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle) {
 
         /* USART1 interrupt Deinit */
         HAL_NVIC_DisableIRQ(USART1_IRQn);
+    } else if (uartHandle->Instance == USART2) {
+        /* Peripheral clock disable */
+        __HAL_RCC_USART2_CLK_DISABLE();
+
+        HAL_GPIO_DeInit(UC_UART_BLUETOOTH_GPIO_Port, UC_UART_BLUETOOTH_TX_Pin | UC_UART_BLUETOOTH_RX_Pin);
+
+        /* USART1 interrupt Deinit */
+        HAL_NVIC_DisableIRQ(USART2_IRQn);
     }
 }
 
@@ -215,7 +311,7 @@ bool USART_write(uart_e uart, char* data, uint16_t size) {
 
         // Ajout donnees au ring buffer
         if (RingBuffer_Write(&uart_handle[uart].TxRingbuffer, (uint8_t*)(data), size) == RING_BUFFER_OK) {
-            if (HAL_DMA_GetState(&uart_handle[uart].TxDmaHandle) == HAL_DMA_STATE_READY) {
+            if (uart_handle[uart].huart.gState == HAL_UART_STATE_READY && HAL_DMA_GetState(&uart_handle[uart].TxDmaHandle) == HAL_DMA_STATE_READY) {
                 ret = USART_tx_write(uart);
             }
         } else {

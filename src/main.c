@@ -34,6 +34,8 @@
 #include "hard/gpio.h"
 #include "lib_callbacks.h"
 #include "debug.h"
+#include "bluetooth.h"
+#include "relay.h"
 
 #define LIFE_TEMPO 5000
 
@@ -87,6 +89,8 @@ int main(void) {
 
     callback_init();
     debug_init();
+    bluetooth_init();
+    relay_init();
 
     // Initialisation des flags
     callback_timer_register_flag(&life_flag, LIFE_TEMPO, true);
@@ -105,12 +109,10 @@ int main(void) {
         if (life_flag) {
             life_flag = false;
             LOG_DEBUG("[RUN] Alive");
-
-            GPIO_toggle(GPIO_RELAY_1);
-            GPIO_toggle(GPIO_RELAY_2);
         }
 
         debug_run();
+        bluetooth_run();
     }
 }
 

@@ -136,4 +136,16 @@ void USART1_IRQHandler(void) {
     HAL_UART_IRQHandler(USART_uart_handle(UART_DEBUG));
 }
 
+void DMA1_Channel7_IRQHandler(void) {
+    HAL_DMA_IRQHandler(USART_tx_dma_handle(UART_BLUETOOTH));
+}
+
+void DMA1_Channel6_IRQHandler(void) {
+    HAL_DMA_IRQHandler(USART_rx_dma_handle(UART_BLUETOOTH));
+}
+
+void USART2_IRQHandler(void) {
+    HAL_UART_IRQHandler(USART_uart_handle(UART_BLUETOOTH));
+}
+
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

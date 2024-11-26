@@ -50,6 +50,8 @@ file(GLOB_RECURSE SRCS
     "${CMAKE_CURRENT_SOURCE_DIR}/lib/*.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/Drivers/STM32F1xx_HAL_Driver/*.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/debug/*.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/bluetooth/*.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/relay/*.c"
 )
 
 file(GLOB SRCS2
@@ -69,6 +71,8 @@ target_include_directories(relay PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/CMSIS/Device/ST/STM32F1xx/Include
     ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/CMSIS/Include
     ${CMAKE_CURRENT_SOURCE_DIR}/debug
+    ${CMAKE_CURRENT_SOURCE_DIR}/bluetooth
+    ${CMAKE_CURRENT_SOURCE_DIR}/relay
 )
 
 target_link_libraries(relay PRIVATE

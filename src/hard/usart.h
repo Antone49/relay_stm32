@@ -28,13 +28,19 @@ extern "C" {
 #include "main.h"
 #include <stdbool.h>
 
-#define UC_UART_DEBUG_TX_Pin    GPIO_PIN_9
-#define UC_UART_DEBUG_RX_Pin    GPIO_PIN_10
-#define UC_UART_DEBUG_GPIO_Port GPIOA
+#define UC_UART_DEBUG_TX_Pin        GPIO_PIN_9
+#define UC_UART_DEBUG_RX_Pin        GPIO_PIN_10
+#define UC_UART_DEBUG_GPIO_Port     GPIOA
 
-#define LIST_UART               X(UART_DEBUG)
+#define UC_UART_BLUETOOTH_TX_Pin    GPIO_PIN_2
+#define UC_UART_BLUETOOTH_RX_Pin    GPIO_PIN_3
+#define UC_UART_BLUETOOTH_GPIO_Port GPIOA
 
-#define X(name)                 name,
+#define LIST_UART                                                                                                                                    \
+    X(UART_DEBUG)                                                                                                                                    \
+    X(UART_BLUETOOTH)
+
+#define X(name) name,
 
 typedef enum {
     LIST_UART NB_UART,
