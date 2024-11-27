@@ -6,6 +6,8 @@
 void relay_init();
 void relay_stop();
 void relay_push_up();
+void relay_push_up_stop();
 void relay_push_down();
+void relay_push_down_stop();
 
 #endif

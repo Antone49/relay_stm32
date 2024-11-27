@@ -4,9 +4,10 @@
 #include <string.h>
 #include "relay.h"
 
-#define COMMAND_PUSH_UP "Up"
-#define COMMAND_PUSH_DOWN "Down"
-#define COMMAND_PUSH_STOP "Stop"
+#define COMMAND_PUSH_UP        "Up"
+#define COMMAND_PUSH_UP_STOP   "UpStop"
+#define COMMAND_PUSH_DOWN      "Down"
+#define COMMAND_PUSH_DOWN_STOP "DownStop"
 
 volatile uint16_t bluetooth_uart_data_received;
 
@@ -31,11 +32,14 @@ void bluetooth_run() {
         if (strlen(data) == strlen(COMMAND_PUSH_UP) && strcmp(data, COMMAND_PUSH_UP) == 0) {
             relay_push_up();
 
+        } else if (strlen(data) == strlen(COMMAND_PUSH_UP_STOP) && strcmp(data, COMMAND_PUSH_UP_STOP) == 0) {
+            relay_push_up_stop();
+
         } else if (strlen(data) == strlen(COMMAND_PUSH_DOWN) && strcmp(data, COMMAND_PUSH_DOWN) == 0) {
             relay_push_down();
 
-        }  else if (strlen(data) == strlen(COMMAND_PUSH_STOP) && strcmp(data, COMMAND_PUSH_STOP) == 0) {
-            relay_stop();
+        } else if (strlen(data) == strlen(COMMAND_PUSH_DOWN_STOP) && strcmp(data, COMMAND_PUSH_DOWN_STOP) == 0) {
+            relay_push_down_stop();
 
         } else {
             LOG_WARN("No command found");

@@ -28,6 +28,10 @@ void relay_push_up() {
     }
 }
 
+void relay_push_up_stop() {
+    relay_1_stop();
+}
+
 void relay_push_down() {
     LOG_INFO("Relay 2 enabled");
 
@@ -38,6 +42,10 @@ void relay_push_down() {
     } else {
         callback_timer_rearmed(relay_2_timer_callback_id);
     }
+}
+
+void relay_push_down_stop() {
+    relay_2_stop();
 }
 
 void relay_stop() {
