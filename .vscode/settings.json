@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "lib_ringbuffer.h": "c",
+        "debug.h": "c",
+        "lib_log.h": "c",
+        "unistd.h": "c",
+        "lib_callbacks.h": "c"
+    }
+}

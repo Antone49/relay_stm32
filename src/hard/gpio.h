@@ -24,8 +24,8 @@
 #include "stm32f1xx_hal.h"
 
 #define UC_GPIO_LIST                                                                                                                                 \
-    X(GPIO_RELAY_1, GPIOA, GPIO_PIN_6, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW)                                                       \
-    X(GPIO_RELAY_2, GPIOA, GPIO_PIN_5, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW)    
+    X(GPIO_RELAY_1, GPIOA, GPIO_PIN_5, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW)                                                        \
+    X(GPIO_RELAY_2, GPIOA, GPIO_PIN_6, GPIO_MODE_OUTPUT_PP, GPIO_NOPULL, GPIO_SPEED_FREQ_LOW)
 
 typedef enum {
 
